@@ -138,6 +138,9 @@ multilib_src_install() {
 multilib_src_install_all() {
 	# help gcc find its way
 	use abi_x86_32 && dosym usr/${LIBDIR_x86} /usr/${CTARGET}/lib32
-	use abi_x86_64 && dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib64
+	if use abi_x86_64; then
+		dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib64
+		use abi_x86_32 || dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib
+	fi
 	dosym usr/include /usr/${CTARGET}/sys-include
 }

@@ -68,7 +68,7 @@ src_configure() {
 		--with$(just_headers && echo 'out')-crt
 		$(use_enable idl)
 		$(use_enable abi_x86_32 lib32)
-		$(use_enable abi_x86_64 lib64)
+		--enable-lib64
 		--enable-wildcard
 		--enable-secure-api
 	)
@@ -104,13 +104,10 @@ src_install() {
 	dosym usr /usr/${CTARGET}/mingw
 	dosym usr/include /usr/${CTARGET}/include
 	just_headers && return
+	dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib
+	dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib64
 	if use abi_x86_32; then
-		use abi_x86_64 || dosym usr/${LIBDIR_x86} /usr/${CTARGET}/lib
+		dosym ../${LIBDIR_x86} /usr/${CTARGET}/usr/${LIBDIR_amd64}/32
 		dosym usr/${LIBDIR_x86} /usr/${CTARGET}/lib32
-	fi
-	if use abi_x86_64; then
-		dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib
-		use abi_x86_32 && dosym ../${LIBDIR_x86} /usr/${CTARGET}/usr/${LIBDIR_amd64}/32
-		dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib64
 	fi
 }
