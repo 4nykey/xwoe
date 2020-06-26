@@ -5,9 +5,9 @@ done
 cp -r etc/portage/* /etc/portage/
 
 
-USE="headers-only" \
-    emerge cross-x86_64-pc-cygwin/binutils \
-    cross-x86_64-pc-cygwin/cygwin cross-x86_64-pc-cygwin/w32api \
-    cross-x86_64-pc-cygwin/gcc -1a
+USE="headers-only" emerge \
+    cross-x86_64-pc-cygwin/cygwin cross-x86_64-pc-cygwin/w32api -1a
 
-emerge --ask @cross-x86_64-pc-cygwin
+emerge cross-x86_64-pc-cygwin/gcc -1a
+
+emerge --ask @cross-x86_64-pc-cygwin --noreplace --changed-use
