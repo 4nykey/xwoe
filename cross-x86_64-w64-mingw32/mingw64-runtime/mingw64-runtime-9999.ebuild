@@ -1,7 +1,7 @@
-# Copyright 1999-2018 Gentoo Authors
+# Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=7
 
 export CBUILD=${CBUILD:-${CHOST}}
 export CTARGET=${CTARGET:-${CHOST}}
@@ -49,13 +49,13 @@ pkg_setup() {
 
 src_prepare() {
 	local PATCHES=(
-		"${FILESDIR}"/w32api-wcstombs.diff
+		"${FILESDIR}"/${PN}-7.0.0-fortify-only-ssp.patch
 	)
 	default
 	just_headers && return
 	sed \
-		-e "s:\(libx8632suffx=\)lib.*:\1${LIBDIR_x86}:" \
-		-e "s:\(libx8664suffx=\)lib.*:\1${LIBDIR_amd64}:" \
+		-e "/libx8632suffx=/ s:=.*:=lib32:" \
+		-e "/libx8664suffx=/ s:=.*:=lib64:" \
 		-i mingw-w64-crt/configure.ac
 	eautoreconf
 }
@@ -97,17 +97,16 @@ src_compile() {
 
 src_install() {
 	default
-	env -uRESTRICT CHOST=${CTARGET} prepallstrip
 
 	[[ ${CHOST} != ${CTARGET} ]] || return
 	# gcc is configured to look at specific hard-coded paths for mingw #419601
 	dosym usr /usr/${CTARGET}/mingw
 	dosym usr/include /usr/${CTARGET}/include
 	just_headers && return
-	dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib
-	dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib64
+	dosym usr/lib64 /usr/${CTARGET}/lib
+	dosym usr/lib64 /usr/${CTARGET}/lib64
 	if use abi_x86_32; then
-		dosym ../${LIBDIR_x86} /usr/${CTARGET}/usr/${LIBDIR_amd64}/32
-		dosym usr/${LIBDIR_x86} /usr/${CTARGET}/lib32
+		dosym ../lib32 /usr/${CTARGET}/usr/lib64/32
+		dosym usr/lib32 /usr/${CTARGET}/lib32
 	fi
 }
