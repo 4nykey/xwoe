@@ -1,7 +1,7 @@
-# Copyright 1999-2018 Gentoo Foundation
+# Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=7
 
 MULTILIB_COMPAT=( abi_x86_{32,64} )
 inherit flag-o-matic vcs-snapshot multilib-build
@@ -19,10 +19,10 @@ HOMEPAGE="http://cygwin.com/"
 MY_H="${PN}-headers-${PV}-1"
 MY_R="${PN}-runtime-${PV}-1"
 MY_PN="mingw-w64"
-MY_P="${MY_PN}-v${PV}"
 SRC_URI="
 	!headers-only? (
-		mirror://sourceforge/${MY_PN}/${MY_PN}/${MY_PN}-release/${MY_P}.tar.bz2
+		mirror://sourceforge/${MY_PN}/${MY_PN}/${MY_PN}-release/${MY_PN}-v${PV}.tar.bz2
+		-> ${P}.tar.bz2
 	)
 	headers-only? (
 		mirror://cygwin/x86_64/release/${PN}-headers/${MY_H}.tar.xz
@@ -42,7 +42,6 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE="headers-only"
 RESTRICT="strip primaryuri"
-S="${WORKDIR}"
 DEPEND=""
 
 just_headers() {
@@ -53,18 +52,19 @@ pkg_setup() {
 	if [[ ${CBUILD} == ${CHOST} ]] && [[ ${CHOST} == ${CTARGET} ]] ; then
 		die "Invalid configuration"
 	fi
-	just_headers && return
-	S="${WORKDIR}/${MY_P}"
-	CHOST=${CTARGET} strip-unsupported-flags
-	filter-flags -m*=*
-	strip-flags
-	unset AR RANLIB
+	if just_headers; then
+		S="${WORKDIR}"
+	else
+		CHOST=${CTARGET} strip-unsupported-flags
+		filter-flags -m*=*
+		strip-flags
+		unset AR RANLIB
+	fi
 }
 
 src_prepare() {
 	default
 	if ! just_headers; then
-		eapply "${FILESDIR}"/${PN}-wcstombs.diff
 		mkdir "${T}"/tmproot
 		cp -r "${EPREFIX}"/usr/${CTARGET}/usr/include "${T}"/tmproot
 		rm -rf "${T}"/tmproot/include/w32api
@@ -78,7 +78,7 @@ src_configure() {
 		--enable-w32api
 		--with-headers
 		$(use_enable abi_x86_32 lib32)
-		$(use_enable abi_x86_64 lib64)
+		--enable-lib64
 	)
 
 	# don't use headers from previously installed version
@@ -104,7 +104,7 @@ src_compile() {
 src_install() {
 	if just_headers; then
 		local _a
-		for _a in ${MULTILIB_ABIS}; do
+		for _a in $(multilib_get_enabled_abis); do
 			insinto /usr/${CTARGET}/usr/$(get_abi_LIBDIR ${_a})
 			doins -r ${MY_R}-${_a}/lib/${PN}/.
 			insinto /usr/${CTARGET}/usr
@@ -113,11 +113,12 @@ src_install() {
 		doins -r ${MY_H}/include
 	else
 		emake \
-			DESTDIR="${D}usr/${CTARGET}" \
+			DESTDIR="${ED}/usr/${CTARGET}" \
 			lib32dir="/usr/${LIBDIR_x86}" \
 			lib64dir="/usr/${LIBDIR_amd64}" \
 			install
 	fi
 	use abi_x86_32 && dosym . /usr/${CTARGET}/usr/${LIBDIR_x86}/${PN}
-	use abi_x86_64 && dosym . /usr/${CTARGET}/usr/${LIBDIR_amd64}/${PN}
+	dosym . /usr/${CTARGET}/usr/${LIBDIR_amd64}/${PN}
+	dosym usr/include/w32api /usr/${CTARGET}/sys-include
 }
