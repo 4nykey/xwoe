@@ -1,10 +1,10 @@
-# Copyright 1999-2019 Gentoo Authors
+# Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=7
 
 MULTILIB_COMPAT=( abi_x86_{32,64} )
-inherit flag-o-matic vcs-snapshot eapi7-ver multilib-minimal
+inherit flag-o-matic vcs-snapshot multilib-minimal
 
 export CBUILD=${CBUILD:-${CHOST}}
 export CTARGET=${CTARGET:-${CHOST}}
@@ -58,10 +58,13 @@ pkg_setup() {
 	if [[ ${CBUILD} == ${CHOST} ]] && [[ ${CHOST} == ${CTARGET} ]] ; then
 		die "Invalid configuration; do not emerge this directly"
 	fi
+
 	just_headers && S="${WORKDIR}" && return
+
 	PATCHES=(
 		"${FILESDIR}"/${PN}-2.4.0-dont_regen_devices.cc.diff
 		"${FILESDIR}"/${PN}-multilib.diff
+		"${FILESDIR}"/${PN}-ssp.diff
 	)
 	CHOST=${CTARGET} strip-unsupported-flags
 	filter-flags -march=*
@@ -76,7 +79,13 @@ pkg_setup() {
 
 src_prepare() {
 	default
-	just_headers && return
+
+	if just_headers; then
+		cd ${P}-amd64
+		eapply -p3 "${FILESDIR}"/${PN}-ssp.diff
+		return
+	fi
+
 	sed \
 		-e '/INSTALL_LICENSE="install-license"/d' \
 		-e 's:\(subdirs="\$subdirs cygwin\).*":\1":' \
@@ -96,7 +105,6 @@ multilib_src_configure() {
 		--infodir="${EPREFIX}/usr/${CTARGET}/usr/share/info"
 		--with-windows-headers="${EPREFIX}/usr/${CTARGET}/usr/include/w32api"
 		--with-windows-libs="${EPREFIX}/usr/${CTARGET}/usr/$(get_abi_LIBDIR)/w32api"
-		--enable-libssp
 		--disable-multilib
 		--target=${CHOST%%-*}-${CTARGET#*-}
 	)
@@ -116,18 +124,15 @@ multilib_src_compile() {
 
 multilib_src_install() {
 	if just_headers; then
-		local _d="${S}/${P}-${ABI}"
-		insinto /usr/${CTARGET}/usr
-		doins -r "${_d}"/include
 		# install prebuilt libs because of circular dep gcc(+cxx) <-> cygwin
 		insinto /usr/${CTARGET}/usr/$(get_abi_LIBDIR)
-		doins -r "${_d}"/lib/.
+		doins -r "${S}"/${P}-${ABI}/lib/.
 	else
 		dodir /usr/${CTARGET}/usr/lib
 		# parallel install may overwrite winsup headers with newlib ones
 		emake \
 			-j1 \
-			DESTDIR="${D}" \
+			DESTDIR="${ED}" \
 			ABI=${ABI} \
 			tooldir="${EPREFIX}/usr/${CTARGET}/usr" \
 			libdir=$(get_abi_LIBDIR) \
@@ -136,11 +141,13 @@ multilib_src_install() {
 }
 
 multilib_src_install_all() {
-	# help gcc find its way
-	use abi_x86_32 && dosym usr/${LIBDIR_x86} /usr/${CTARGET}/lib32
-	if use abi_x86_64; then
-		dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib64
-		use abi_x86_32 || dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib
+	if just_headers; then
+		insinto /usr/${CTARGET}/usr
+		doins -r ${P}-amd64/include
 	fi
-	dosym usr/include /usr/${CTARGET}/sys-include
+	# help gcc find its way
+	use abi_x86_32 && dosym usr/${LIBDIR_x86} /usr/${CTARGET}/${LIBDIR_x86}
+	dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/${LIBDIR_amd64}
+	dosym usr/${LIBDIR_amd64} /usr/${CTARGET}/lib
+	dosym usr/include /usr/${CTARGET}/include
 }

@@ -1,3 +1,23 @@
+--- a/newlib/configure.host
++++ b/newlib/configure.host
+@@ -349,9 +349,17 @@ case "${host_cpu}" in
+ 	machine_dir=w65
+ 	;;
+   x86_64)
++	case ${with_multisubdir} in
++	32)
++	libm_machine_dir=i386
++	machine_dir=i386
++	;;
++	*) 
+ 	machine_dir=x86_64
+ 	libm_machine_dir=x86_64
+ 	;;
++	esac
++	;;
+   xc16x*)
+         machine_dir=xc16x
+         ;;
 --- a/winsup/cygwin/Makefile.in
 +++ b/winsup/cygwin/Makefile.in
 @@ -584,12 +584,12 @@ install: install-libs install-headers in

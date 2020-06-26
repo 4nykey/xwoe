@@ -1,0 +1,10 @@
+--- a/newlib/libc/include/sys/features.h
++++ b/newlib/libc/include/sys/features.h
+@@ -320,6 +320,7 @@ extern "C" {
+ #endif
+ 
+ #if _FORTIFY_SOURCE > 0 && !defined(__cplusplus) && !defined(__lint__) && \
++   __SSP__ > 0 && \
+    (__OPTIMIZE__ > 0 || defined(__clang__)) && __GNUC_PREREQ__(4, 1)
+ #  if _FORTIFY_SOURCE > 1
+ #    define __SSP_FORTIFY_LEVEL 2
