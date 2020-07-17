@@ -1,0 +1,46 @@
+--- a/winsup/cygwin/sigproc.cc
++++ b/winsup/cygwin/sigproc.cc
+@@ -1065,7 +1065,7 @@ child_info::proc_retry (HANDLE h)
+   if (!exit_code)
+     return EXITCODE_OK;
+   sigproc_printf ("exit_code %y", exit_code);
+-  switch (exit_code)
++  switch (int(exit_code))
+     {
+     case STILL_ACTIVE:	/* shouldn't happen */
+       sigproc_printf ("STILL_ACTIVE?  How'd we get here?");
+--- a/winsup/cygwin/pinfo.cc
++++ b/winsup/cygwin/pinfo.cc
+@@ -114,7 +114,7 @@ pinfo_init (char **envp, int envc)
+ DWORD
+ pinfo::status_exit (DWORD x)
+ {
+-  switch (x)
++  switch (int(x))
+     {
+     case STATUS_DLL_NOT_FOUND:
+       {
+--- a/winsup/cygwin/fhandler_console.cc
++++ b/winsup/cygwin/fhandler_console.cc
+@@ -2782,8 +2782,8 @@ fhandler_console::write_normal (const un
+       int cp_len = MIN (end - src, 4 - trunc_buf.len);
+       memcpy (trunc_buf.buf + trunc_buf.len, src, cp_len);
+       memset (&ps, 0, sizeof ps);
+-      switch (ret = f_mbtowc (_REENT, NULL, (const char *) trunc_buf.buf,
+-			       trunc_buf.len + cp_len, &ps))
++      switch ((int)(ret = f_mbtowc (_REENT, NULL, (const char *) trunc_buf.buf,
++			       trunc_buf.len + cp_len, &ps)))
+ 	{
+ 	case -2:
+ 	  /* Still truncated multibyte sequence?  Keep in trunc_buf. */
+@@ -2836,8 +2836,8 @@ fhandler_console::write_normal (const un
+ 	 && ((wincap.has_con_24bit_colors () && !con_is_legacy)
+ 	     || base_chars[*found] == NOR))
+     {
+-      switch (ret = f_mbtowc (_REENT, NULL, (const char *) found,
+-			       end - found, &ps))
++      switch ((int)(ret = f_mbtowc (_REENT, NULL, (const char *) found,
++			       end - found, &ps)))
+ 	{
+ 	case -2: /* Truncated multibyte sequence.  Store for next write. */
+ 	  trunc_buf.len = end - found;

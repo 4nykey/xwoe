@@ -65,6 +65,7 @@ pkg_setup() {
 		"${FILESDIR}"/${PN}-2.4.0-dont_regen_devices.cc.diff
 		"${FILESDIR}"/${PN}-multilib.diff
 		"${FILESDIR}"/${PN}-ssp.diff
+		"${FILESDIR}"/${PN}-narrowing.diff
 	)
 	CHOST=${CTARGET} strip-unsupported-flags
 	filter-flags -march=*
