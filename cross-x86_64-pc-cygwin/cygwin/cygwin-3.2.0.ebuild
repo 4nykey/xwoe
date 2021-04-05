@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -46,9 +46,14 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="headers-only"
 RESTRICT="strip primaryuri"
-HDEPEND="
+BDEPEND="
 	virtual/perl-Getopt-Long
 "
+PATCHES=(
+	"${FILESDIR}"/${PN}-2.4.0-dont_regen_devices.cc.diff
+	"${FILESDIR}"/${PN}-multilib.diff
+	"${FILESDIR}"/${PN}-ssp.diff
+)
 
 just_headers() {
 	use headers-only && [[ ${CHOST} != ${CTARGET} ]]
@@ -59,14 +64,12 @@ pkg_setup() {
 		die "Invalid configuration; do not emerge this directly"
 	fi
 
-	just_headers && S="${WORKDIR}" && return
+	if just_headers; then
+		S="${WORKDIR}"
+		PATCHES=()
+		return
+	fi
 
-	PATCHES=(
-		"${FILESDIR}"/${PN}-2.4.0-dont_regen_devices.cc.diff
-		"${FILESDIR}"/${PN}-multilib.diff
-		"${FILESDIR}"/${PN}-ssp.diff
-		"${FILESDIR}"/${PN}-narrowing.diff
-	)
 	CHOST=${CTARGET} strip-unsupported-flags
 	filter-flags -march=*
 	strip-flags
@@ -88,9 +91,9 @@ src_prepare() {
 	fi
 
 	sed \
-		-e '/INSTALL_LICENSE="install-license"/d' \
-		-e 's:\(subdirs="\$subdirs cygwin\).*":\1":' \
-		-i winsup/configure
+		-e '/install: / s,install-license,,' \
+		-e '/^SUBDIRS=/ s:=.*:=cygwin:' \
+		-i winsup/Makefile.in
 	sed \
 		-e 's:-Werror::' \
 		-e 's:install-man install-ldif::' \

@@ -24,9 +24,9 @@
  uninstall: uninstall-libs uninstall-headers uninstall-man
  
  install-libs: $(TARGET_LIBS)
--	@$(MKDIRP) $(DESTDIR)$(bindir)
+-	@$(MKDIRP) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/lib
 -	$(INSTALL_PROGRAM) $(TEST_DLL_NAME) $(DESTDIR)$(bindir)/$(DLL_NAME); \
-+	@$(MKDIRP) $(DESTDIR)$(tooldir)/bin/$(ABI)
++	@$(MKDIRP) $(DESTDIR)$(tooldir)/bin/$(ABI) $(DESTDIR)$(tooldir)/lib
 +	$(INSTALL_PROGRAM) $(TEST_DLL_NAME) $(DESTDIR)$(tooldir)/bin/$(ABI)/$(DLL_NAME); \
  	for i in $^; do \
 -	    $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/lib/`basename $$i` ; \
@@ -37,7 +37,7 @@
  
  install-headers:
  	cd $(srcdir); \
-@@ -749,9 +749,12 @@ libacl.a: ${LIB_NAME} sec_posixacl.o
+@@ -749,10 +749,13 @@ libacl.a: ${LIB_NAME} sec_posixacl.o
  
  # mkvers.sh creates version.cc in the first place, winver.o always
  # second, so version.cc is always older than winver.o
@@ -46,11 +46,12 @@
 +endif
  version.cc: mkvers.sh include/cygwin/version.h winver.rc $(src_files)
  	@echo "Making version.cc and winver.o";\
--	/bin/sh ${word 1,$^} ${word 2,$^} ${word 3,$^} $(WINDRES) ${CFLAGS} $(addprefix -I,${CCWRAP_SYSTEM_HEADERS} ${CCWRAP_DIRAFTER_HEADERS})
-+	/bin/sh ${word 1,$^} ${word 2,$^} ${word 3,$^} '$(WINDRES) $(WINDRESFLAGS)' ${CFLAGS} $(addprefix -I,${CCWRAP_SYSTEM_HEADERS} ${CCWRAP_DIRAFTER_HEADERS})
+ 	export CC="${CC}";\
+-	/bin/sh ${word 1,$^} ${word 2,$^} ${word 3,$^} $(WINDRES) ${CFLAGS} -I${srcdir}/include
++	/bin/sh ${word 1,$^} ${word 2,$^} ${word 3,$^} '$(WINDRES) $(WINDRESFLAGS)' ${CFLAGS} -I${srcdir}/include
  $(VERSION_OFILES): version.cc
  
- Makefile: ${srcdir}/Makefile.in
+ $(DEF_FILE): gendef $(srcdir)/$(TLSOFFSETS_H) $(DIN_FILE)
 --- a/newlib/Makefile.in
 +++ b/newlib/Makefile.in
 @@ -380,7 +380,7 @@ SUBDIRS = libc libm \
