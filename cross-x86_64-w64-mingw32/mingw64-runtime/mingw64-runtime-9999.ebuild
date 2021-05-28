@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -14,7 +14,7 @@ fi
 MY_PN="mingw-w64"
 
 MULTILIB_COMPAT=( abi_x86_{32,64} )
-inherit flag-o-matic autotools multilib-build
+inherit flag-o-matic multilib-build
 if [[ -z ${PV%%*9999} ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://git.code.sf.net/p/${MY_PN}/${MY_PN}"
@@ -56,8 +56,7 @@ src_prepare() {
 	sed \
 		-e "/libx8632suffx=/ s:=.*:=lib32:" \
 		-e "/libx8664suffx=/ s:=.*:=lib64:" \
-		-i mingw-w64-crt/configure.ac
-	eautoreconf
+		-i mingw-w64-crt/configure
 }
 
 src_configure() {

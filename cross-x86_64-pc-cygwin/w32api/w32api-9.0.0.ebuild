@@ -4,7 +4,7 @@
 EAPI=7
 
 MULTILIB_COMPAT=( abi_x86_{32,64} )
-inherit flag-o-matic vcs-snapshot multilib-build
+inherit flag-o-matic multilib-build
 
 export CBUILD=${CBUILD:-${CHOST}}
 export CTARGET=${CTARGET:-${CHOST}}
@@ -36,6 +36,7 @@ SRC_URI="
 		)
 	)
 "
+S="${WORKDIR}/${MY_PN}-v${PV}"
 
 LICENSE="GPL-2"
 SLOT="0"
