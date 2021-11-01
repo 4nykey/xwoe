@@ -1,6 +1,6 @@
 --- a/newlib/configure.host
 +++ b/newlib/configure.host
-@@ -349,9 +349,17 @@ case "${host_cpu}" in
+@@ -359,10 +359,18 @@ case "${host_cpu}" in
  	machine_dir=w65
  	;;
    x86_64)
@@ -12,49 +12,53 @@
 +	*) 
  	machine_dir=x86_64
  	libm_machine_dir=x86_64
+ 	shared_machine_dir=shared_x86
  	;;
 +	esac
 +	;;
    xc16x*)
          machine_dir=xc16x
          ;;
---- a/winsup/cygwin/Makefile.in
-+++ b/winsup/cygwin/Makefile.in
-@@ -584,12 +584,12 @@ install: install-libs install-headers in
- uninstall: uninstall-libs uninstall-headers uninstall-man
+--- a/winsup/cygwin/Makefile.am
++++ b/winsup/cygwin/Makefile.am
+@@ -34,7 +34,7 @@ install: install-libs install-headers in
+ # installed there by newlib.
+ #
  
- install-libs: $(TARGET_LIBS)
--	@$(MKDIRP) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/lib
--	$(INSTALL_PROGRAM) $(TEST_DLL_NAME) $(DESTDIR)$(bindir)/$(DLL_NAME); \
-+	@$(MKDIRP) $(DESTDIR)$(tooldir)/bin/$(ABI) $(DESTDIR)$(tooldir)/lib
-+	$(INSTALL_PROGRAM) $(TEST_DLL_NAME) $(DESTDIR)$(tooldir)/bin/$(ABI)/$(DLL_NAME); \
- 	for i in $^; do \
--	    $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/lib/`basename $$i` ; \
-+	    $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/$(libdir)/`basename $$i` ; \
- 	done
--	cd $(DESTDIR)$(tooldir)/lib && ln -sf libcygwin.a libg.a
-+	cd $(DESTDIR)$(tooldir)/$(libdir) && ln -sf libcygwin.a libg.a
+-toollibdir=$(tooldir)/lib
++toollibdir=$(tooldir)/$(libdir)
+ toolincludedir=$(tooldir)/include
  
- install-headers:
- 	cd $(srcdir); \
-@@ -749,10 +749,13 @@ libacl.a: ${LIB_NAME} sec_posixacl.o
+ # Parameters used in building the cygwin.dll.
+@@ -400,10 +400,13 @@ libacl.a: ${LIB_NAME} sec_posixacl.o
  
  # mkvers.sh creates version.cc in the first place, winver.o always
  # second, so version.cc is always older than winver.o
-+ifeq ($(target_cpu),i686)
++if !TARGET_X86_64
 +WINDRESFLAGS=-F pe-i386
 +endif
  version.cc: mkvers.sh include/cygwin/version.h winver.rc $(src_files)
  	@echo "Making version.cc and winver.o";\
- 	export CC="${CC}";\
--	/bin/sh ${word 1,$^} ${word 2,$^} ${word 3,$^} $(WINDRES) ${CFLAGS} -I${srcdir}/include
+ 	export CC="$(CC)";\
+-	/bin/sh $(word 1,$^) $(word 2,$^) $(word 3,$^) $(WINDRES) $(CFLAGS)
 +	/bin/sh ${word 1,$^} ${word 2,$^} ${word 3,$^} '$(WINDRES) $(WINDRESFLAGS)' ${CFLAGS} -I${srcdir}/include
- $(VERSION_OFILES): version.cc
  
- $(DEF_FILE): gendef $(srcdir)/$(TLSOFFSETS_H) $(DIN_FILE)
+ winver.o: version.cc
+ 
+@@ -725,8 +725,8 @@ install: install-libs install-headers in
+ install-data-local: install-headers install-ldif
+ 
+ install-libs:
+-	@$(MKDIR_P) $(DESTDIR)$(bindir)
+-	$(INSTALL_PROGRAM) $(TEST_DLL_NAME) $(DESTDIR)$(bindir)/$(DLL_NAME)
++	@$(MKDIR_P) $(DESTDIR)$(tooldir)/bin/$(ABI)
++	$(INSTALL_PROGRAM) $(TEST_DLL_NAME) $(DESTDIR)$(tooldir)/bin/$(ABI)/$(DLL_NAME)
+ 	@$(MKDIR_P) $(DESTDIR)$(toollibdir)
+ 	(cd $(DESTDIR)$(toollibdir) && ln -sf $(LIB_NAME) libg.a)
+ 
 --- a/newlib/Makefile.in
 +++ b/newlib/Makefile.in
-@@ -380,7 +380,7 @@ SUBDIRS = libc libm \
+@@ -381,7 +381,7 @@ SUBDIRS = libc libm \
  	$(DOCDIR) . $(EXTRA_DIRS)
  
  tooldir = $(exec_prefix)/$(host_alias)

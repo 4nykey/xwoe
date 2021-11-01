@@ -4,7 +4,7 @@
 EAPI=7
 
 MULTILIB_COMPAT=( abi_x86_{32,64} )
-inherit flag-o-matic vcs-snapshot multilib-minimal
+inherit autotools flag-o-matic vcs-snapshot multilib-minimal
 
 export CBUILD=${CBUILD:-${CHOST}}
 export CTARGET=${CTARGET:-${CHOST}}
@@ -50,7 +50,6 @@ BDEPEND="
 	virtual/perl-Getopt-Long
 "
 PATCHES=(
-	"${FILESDIR}"/${PN}-2.4.0-dont_regen_devices.cc.diff
 	"${FILESDIR}"/${PN}-multilib.diff
 	"${FILESDIR}"/${PN}-ssp.diff
 )
@@ -91,20 +90,21 @@ src_prepare() {
 	fi
 
 	sed \
-		-e '/install: / s,install-license,,' \
-		-e '/^SUBDIRS=/ s:=.*:=cygwin:' \
-		-i winsup/Makefile.in
+		-e '/^SUBDIRS/ s:=.*:=cygwin:' \
+		-e 's:cygdoc_DATA = :&#:' \
+		-i winsup/Makefile.am
 	sed \
 		-e 's:-Werror::' \
-		-e 's:install-man install-ldif::' \
-		-e 's:\$(DESTDIR)\$(bindir):$(DESTDIR)$(tooldir)/bin:' \
-		-i winsup/cygwin/Makefile.in
+		-i winsup/cygwin/Makefile.am
+	cd winsup
+	eautoreconf
 }
 
 multilib_src_configure() {
 	just_headers && return
 	local myeconfargs=(
 		--disable-werror
+		--disable-silent-rules
 		--with-cross-bootstrap
 		--infodir="${EPREFIX}/usr/${CTARGET}/usr/share/info"
 		--with-windows-headers="${EPREFIX}/usr/${CTARGET}/usr/include/w32api"
