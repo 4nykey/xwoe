@@ -1,1 +1,2 @@
 cross-x86_64-pc-cygwin/gcc -* cxx multilib
+cross-x86_64-pc-cygwin/binutils -pgo
