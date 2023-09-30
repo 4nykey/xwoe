@@ -5,8 +5,8 @@ EAPI=8
 
 inherit edo flag-o-matic toolchain-funcs autotools
 
-BINUTILS_PV=2.40
-GCC_PV=13.1.0
+BINUTILS_PV=2.41
+GCC_PV=13.2.0
 W32_PV=11.0.1
 MY_PN=${PN%-*}
 MY_P=${MY_PN}-${PV}
