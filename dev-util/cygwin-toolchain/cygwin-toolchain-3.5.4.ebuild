@@ -5,9 +5,9 @@ EAPI=8
 
 inherit edo flag-o-matic toolchain-funcs autotools
 
-BINUTILS_PV=2.41
-GCC_PV=13.2.0
-W32_PV=11.0.1
+BINUTILS_PV=2.42
+GCC_PV=14.1.0
+W32_PV=12.0.0
 MY_PN=${PN%-*}
 MY_P=${MY_PN}-${PV}
 
@@ -20,7 +20,6 @@ SRC_URI="
 	mirror://gnu/binutils/binutils-${BINUTILS_PV}.tar.xz
 "
 SRC_URI+="
-	mirror://cygwin/x86_64/release/${MY_PN}/${MY_PN}-devel/${MY_PN}-devel-${PV}-1.tar.xz
 	mirror://cygwin/x86_64/release/w32api-headers/w32api-headers-${W32_PV}-1.tar.xz
 	mirror://cygwin/x86_64/release/w32api-runtime/w32api-runtime-${W32_PV}-1.tar.xz
 "
