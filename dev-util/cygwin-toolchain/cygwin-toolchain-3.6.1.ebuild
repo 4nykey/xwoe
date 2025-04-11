@@ -1,11 +1,11 @@
-# Copyright 2022-2024 Gentoo Authors
+# Copyright 2022-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 inherit edo flag-o-matic toolchain-funcs autotools
 
-BINUTILS_PV=2.43
+BINUTILS_PV=2.44
 GCC_PV=14.2.0
 W32_PV=12.0.0
 MY_PN=${PN%-*}
@@ -15,7 +15,7 @@ DESCRIPTION="All-in-one cygwin cross toolchain"
 HOMEPAGE="https://cygwin.org"
 SRC_URI="
 	mirror://githubcl/${MY_PN}/${MY_PN}/tar.gz/${MY_P} -> ${P}.tar.gz
-	mirror://cygwin/x86_64/release/${MY_PN}/${MY_PN}-devel/${MY_PN}-devel-${PV}-1.tar.xz
+	mirror://cygwin/x86_64/release/${MY_PN}/${MY_PN}-devel/${MY_PN}-devel-${PV}-1-x86_64.tar.xz
 	mirror://githubcl/mingw-w64/mingw-w64/tar.gz/v${W32_PV} -> mingw-w64-v${W32_PV}.tar.gz
 	mirror://gnu/binutils/binutils-${BINUTILS_PV}.tar.xz
 "
