@@ -3,11 +3,11 @@
 
 EAPI=8
 
-inherit edo flag-o-matic toolchain-funcs autotools
+inherit edo flag-o-matic toolchain-funcs autotools unpacker
 
-BINUTILS_PV=2.45
-GCC_PV=15.2.0
-W32_PV=13.0.0
+BINUTILS_PV=2.46-1
+GCC_PV=15.2.1+20260321-0.1
+W32_PV=14.0.0
 MY_PN=${PN%-*}
 MY_P=${MY_PN}-${PV}
 
@@ -17,20 +17,13 @@ SRC_URI="
 	mirror://githubcl/${MY_PN}/${MY_PN}/tar.gz/${MY_P} -> ${P}.tar.gz
 	mirror://cygwin/x86_64/release/${MY_PN}/${MY_PN}-devel/${MY_PN}-devel-${PV}-1-x86_64.tar.xz
 	mirror://githubcl/mingw-w64/mingw-w64/tar.gz/v${W32_PV} -> mingw-w64-v${W32_PV}.tar.gz
-	mirror://gnu/binutils/binutils-${BINUTILS_PV}.tar.xz
 "
 SRC_URI+="
 	mirror://cygwin/x86_64/release/w32api-headers/w32api-headers-${W32_PV}-1-x86_64.tar.xz
 	mirror://cygwin/x86_64/release/w32api-runtime/w32api-runtime-${W32_PV}-1-x86_64.tar.xz
+	mirror://cygwin/x86_64/release/gcc/gcc-${GCC_PV}-src.tar.zst
+	mirror://cygwin/x86_64/release/binutils/binutils-${BINUTILS_PV}-src.tar.zst
 "
-if [[ ${GCC_PV} == *-* ]]; then
-	SRC_URI+=" mirror://gcc/snapshots/${GCC_PV}/gcc-${GCC_PV}.tar.xz"
-else
-	SRC_URI+="
-		mirror://gcc/gcc-${GCC_PV}/gcc-${GCC_PV}.tar.xz
-		mirror://gnu/gcc/gcc-${GCC_PV}/gcc-${GCC_PV}.tar.xz
-	"
-fi
 S="${WORKDIR}"
 
 LICENSE="
@@ -46,8 +39,8 @@ RDEPEND="
 	dev-libs/gmp:=
 	dev-libs/mpc:=
 	dev-libs/mpfr:=
-	sys-libs/zlib:=
 	virtual/libiconv
+	virtual/zlib:=
 "
 DEPEND="
 	${RDEPEND}
@@ -69,12 +62,31 @@ pkg_setup() {
 	use custom-cflags || strip-flags
 }
 
-src_prepare() {
+src_unpack() {
+	unpacker_src_unpack
+	local \
+		_b=binutils-with-gold-${BINUTILS_PV%-*} \
+		_g=gcc-${GCC_PV%%.*}-$(ver_cut 4 ${GCC_PV})
+	unpacker binutils-${BINUTILS_PV}.src/${_b}.tar.zst
+	unpacker gcc-${GCC_PV}.src/${_g}.tar.xz
+
 	# rename directories to simplify both patching and the ebuild
-	mv binutils{-${BINUTILS_PV},} || die
-	mv gcc{-${GCC_PV},} || die
+	mv ${_b} binutils || die
+	mv ${_g} gcc || die
 	mv mingw-w64-${W32_PV} mingw64 || die
 	mv ${MY_PN}{-${MY_P},} || die
+}
+
+src_prepare() {
+	rm -f gcc-${GCC_PV}.src/030*-newlib-locale-*.patch
+
+	pushd binutils
+	eapply -p2 ../binutils-${BINUTILS_PV}.src
+	popd
+
+	pushd gcc
+	eapply ../gcc-${GCC_PV}.src
+	popd
 
 	mv usr/lib/w32api/*.a usr/lib
 	rm -rf usr/lib/w32api
@@ -134,6 +146,11 @@ src_compile() {
 		--without-debuginfod
 		--without-msgpack
 		--without-zstd
+
+		--enable-install-libiberty
+		--with-gcc-major-version-only
+		--disable-shared
+		--disable-host-shared
 	)
 
 	# gcc (minimal -- if need more, disable only in stage1 / enable in stage3)
@@ -156,6 +173,22 @@ src_compile() {
 		--disable-ssp
 		--with-sysroot="${sysroot}"
 		--with-build-sysroot="${sysroot}"
+
+		--enable-version-specific-runtime-libs
+		--enable-__cxa_atexit
+		--enable-clocale=newlib
+		--enable-graphite
+		--enable-threads=posix
+		--enable-libatomic
+		--enable-libgomp
+		--enable-libquadmath
+		--enable-libquadmath-support
+		--disable-libssp
+		--disable-symvers
+		--disable-multilib
+		--enable-linker-build-id
+		--with-default-libstdcxx-abi=gcc4-compatible
+		--enable-libstdcxx-filesystem-ts
 	)
 
 	local conf_gcc_stage1=(
