@@ -5,8 +5,8 @@ EAPI=8
 
 inherit edo flag-o-matic toolchain-funcs autotools unpacker
 
-BINUTILS_PV=2.46-1
-GCC_PV=15.3.1+20260612-0.1
+BINUTILS_PV=2.47-1
+GCC_PV=15.3.1+20260731-0.1
 W32_PV=14.0.0
 MY_PN=${PN%-*}
 MY_P=${MY_PN}-${PV}
@@ -65,7 +65,7 @@ pkg_setup() {
 src_unpack() {
 	unpacker_src_unpack
 	local \
-		_b=binutils-with-gold-${BINUTILS_PV%-*} \
+		_b=binutils-${BINUTILS_PV%-*} \
 		_g=gcc-${GCC_PV%%.*}-$(ver_cut 4 ${GCC_PV})
 	unpacker binutils-${BINUTILS_PV}.src/${_b}.tar.zst
 	unpacker gcc-${GCC_PV}.src/${_g}.tar.xz
